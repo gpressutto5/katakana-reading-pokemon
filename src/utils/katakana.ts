@@ -17,10 +17,18 @@ import * as wanakana from 'wanakana';
 /**
  * Normalizes romaji by removing macrons and converting to standard form
  * ō → ou, ū → uu, etc.
+ * Also normalizes special katakana romanizations:
+ * ディ (dhi/dei) → di, ティ (thi/tei) → ti, etc.
  */
 function normalizeRomaji(romaji: string): string {
   return romaji
     .toLowerCase()
+    // Normalize special small-kana romanizations
+    .replace(/dhi/g, 'di')
+    .replace(/thi/g, 'ti')
+    .replace(/dhu/g, 'du')
+    .replace(/thu/g, 'tu')
+    // Handle macrons
     .replace(/ā/g, 'aa')
     .replace(/ī/g, 'ii')
     .replace(/ū/g, 'uu')
@@ -34,7 +42,7 @@ export function validateRomaji(userInput: string, katakanaAnswer: string): boole
   const userRomaji = wanakana.toRomaji(wanakana.toKatakana(userInput.trim()));
   const answerRomaji = wanakana.toRomaji(katakanaAnswer.trim());
 
-  // Normalize both to handle macrons vs doubled vowels
+  // Normalize both to handle macrons vs doubled vowels and special combinations
   const normalizedUser = normalizeRomaji(userRomaji);
   const normalizedAnswer = normalizeRomaji(answerRomaji);
 
