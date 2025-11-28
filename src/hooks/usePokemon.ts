@@ -43,10 +43,16 @@ export function usePokemon() {
             return null;
           }
 
+          // 1/100 chance for shiny sprite
+          const isShiny = Math.random() < 0.01;
+          const sprite = isShiny
+            ? pokemonData.sprites.front_shiny || pokemonData.sprites.front_default
+            : pokemonData.sprites.front_default;
+
           return {
             id: pokemonData.id,
             name: pokemonData.name,
-            sprite: pokemonData.sprites.front_default,
+            sprite,
             katakanaName: japaneseName,
           };
         });
