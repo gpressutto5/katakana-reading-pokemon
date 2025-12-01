@@ -16,7 +16,11 @@ export function usePokemon() {
       try {
         const query = `
           query GetAllPokemon {
-            pokemon(limit: 151) {
+            pokemon(where: {
+              is_default: {
+                _eq: true
+              }
+            }) {
               id
               name
               pokemonspecy {
