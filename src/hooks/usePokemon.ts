@@ -7,61 +7,82 @@ export function usePokemon() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all 151 Pokemon at once on mount
+  // Fetch all 151 Pokemon at once on mount using GraphQL
   useEffect(() => {
     const fetchAllPokemon = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        // Fetch all 151 Pokemon in parallel
-        const promises = Array.from({ length: 151 }, async (_, i) => {
-          const id = i + 1;
-
-          // Fetch both Pokemon and species data in parallel
-          const [pokemonRes, speciesRes] = await Promise.all([
-            fetch(`https://pokeapi.co/api/v2/pokemon/${id}`),
-            fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}`)
-          ]);
-
-          if (!pokemonRes.ok || !speciesRes.ok) {
-            throw new Error(`Failed to fetch Pokemon ${id}`);
+        const query = `
+          query GetAllPokemon {
+            pokemon(limit: 151) {
+              id
+              name
+              pokemonspecy {
+                pokemonspeciesnames(where: {language: {name: {_eq: "ja-Hrkt"}}}) {
+                  name
+                }
+              }
+              pokemonsprites {
+                default_sprite: sprites(path: "$.front_default")
+                shiny_sprite: sprites(path: "$.front_shiny")
+              }
+            }
           }
+        `;
 
-          const [pokemonData, speciesData] = await Promise.all([
-            pokemonRes.json(),
-            speciesRes.json()
-          ]);
-
-          // Find Japanese katakana name (ja-Hrkt)
-          const japaneseName = speciesData.names.find(
-            (n: { name: string; language: { name: string } }) => n.language.name === 'ja-Hrkt'
-          )?.name;
-
-          // Skip Pokemon without Japanese names
-          if (!japaneseName) {
-            return null;
-          }
-
-          // 1/100 chance for shiny sprite
-          const isShiny = Math.random() < 0.01;
-          const sprite = isShiny
-            ? pokemonData.sprites.front_shiny || pokemonData.sprites.front_default
-            : pokemonData.sprites.front_default;
-
-          return {
-            id: pokemonData.id,
-            name: pokemonData.name,
-            sprite,
-            katakanaName: japaneseName,
-          };
+        const response = await fetch('https://graphql.pokeapi.co/v1beta2', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query }),
         });
 
-        // Wait for all fetches to complete
-        const results = await Promise.all(promises);
+        if (!response.ok) {
+          throw new Error('Failed to fetch Pokemon data from GraphQL endpoint');
+        }
 
-        // Filter out null values (Pokemon without Japanese names)
-        const validPokemon = results.filter((p): p is Pokemon => p !== null);
+        const result = await response.json();
+
+        if (result.errors) {
+          throw new Error('GraphQL query errors: ' + JSON.stringify(result.errors));
+        }
+
+        // Map GraphQL response to Pokemon type
+        const validPokemon: Pokemon[] = result.data.pokemon
+          .map((p: any) => {
+            // Get Japanese katakana name
+            const japaneseName = p.pokemonspecy?.pokemonspeciesnames?.[0]?.name;
+
+            // Skip Pokemon without Japanese names
+            if (!japaneseName) {
+              return null;
+            }
+
+            // Get sprites (first item in array)
+            const sprites = p.pokemonsprites?.[0];
+            const defaultSprite = sprites?.default_sprite;
+            const shinySprite = sprites?.shiny_sprite;
+
+            // Skip if no sprites available
+            if (!defaultSprite) {
+              return null;
+            }
+
+            // 1/100 chance for shiny sprite
+            const isShiny = Math.random() < 0.01;
+            const sprite = isShiny && shinySprite ? shinySprite : defaultSprite;
+
+            return {
+              id: p.id,
+              name: p.name,
+              sprite,
+              katakanaName: japaneseName,
+            };
+          })
+          .filter((p: Pokemon | null): p is Pokemon => p !== null);
 
         setAllPokemon(validPokemon);
 

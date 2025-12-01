@@ -19,7 +19,7 @@ A simple TypeScript React app for practicing katakana reading using Pokemon from
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling
 - **WanaKana** - Katakana-to-romaji validation
-- **PokeAPI** - Pokemon data source
+- **PokeAPI GraphQL** - Pokemon data source
 
 ## Getting Started
 
@@ -82,12 +82,13 @@ src/
 - **Presentational components** - All UI components are stateless and receive data via props
 - **Type safety** - Full TypeScript coverage
 - **Clean architecture** - Separation of concerns between data fetching, validation, and presentation
-- **Performance optimized** - All 151 Pokemon fetched in parallel on initial load (~302 API calls), then cached for instant transitions
+- **Performance optimized** - All 151 Pokemon fetched with single GraphQL query on initial load, then cached for instant transitions
 
 ## Performance
 
-The app fetches all Pokemon data on initial load using parallel requests:
-- **Initial load**: ~5-10 seconds to fetch all 151 Pokemon (2 API calls per Pokemon)
+The app uses GraphQL to efficiently fetch all Pokemon data on initial load:
+- **Initial load**: ~2-3 seconds with single GraphQL query for all 151 Pokemon
 - **Pokemon transitions**: Instant (0ms) - selects from cached data
-- **Network requests**: 302 total (151 Pokemon + 151 species), all in parallel
+- **Network requests**: 1 GraphQL query (fetches only required fields: id, name, sprites, Japanese names)
 - **Memory footprint**: ~150KB for cached Pokemon data
+- **Previous REST approach**: 302 requests - migrated to GraphQL for better performance
