@@ -53,10 +53,20 @@ export function PokemonCard({ pokemon, loading, showSuccessAnimation }: Props) {
         />
         <div className="mt-4">
           <p className="text-5xl font-bold text-gray-800 tracking-wide">
+            {pokemon.isShiny && (
+              <span className="text-yellow-400" title="Shiny!">
+                ✨
+              </span>
+            )}
             {pokemon.katakanaName}
+            {pokemon.isShiny && (
+              <span className="text-yellow-400" title="Shiny!">
+                ✨
+              </span>
+            )}
           </p>
-          <p className="text-sm text-gray-400 mt-2">
-            #{pokemon.id.toString().padStart(3, '0')}
+          <p className="text-sm text-gray-400 mt-2 flex items-center justify-center gap-1">
+            #{pokemon.id.toString().padStart(3, "0")}
           </p>
         </div>
       </div>

@@ -84,6 +84,7 @@ export function usePokemon() {
               name: p.name,
               sprite,
               katakanaName: japaneseName,
+              isShiny,
             };
           })
           .filter((p: Pokemon | null): p is Pokemon => p !== null);
